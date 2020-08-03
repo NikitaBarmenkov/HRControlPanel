@@ -4,7 +4,7 @@
   "description": "control panel in a form of a table for HR's",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\"",
     "build": "node index.js"
   },
   "author": "Nikita Barmenkov",
