@@ -1,0 +1,40 @@
+table {
+    width: 100%;
+    table-layout: fixed;
+    overflow-wrap: break-word;
+}
+th, td {
+    padding: 8px;
+    font-size: 20px;
+}
+.input {
+    width: 90%;
+    margin: 8px;
+    padding: 10px;
+    border:1px solid #000000;
+    outline:none;
+    border-radius: 5px;
+    word-wrap: break-word;
+    font-size: 15px;
+}
+input:hover{
+    border-color: darkgray;
+}
+input:focus{
+    border-color:#4d90fe;
+}
+input:disabled {
+    background-color: rgb(173, 229, 255);
+}
+.button {
+    border: 1px solid rgb(119, 119, 119);
+    border-radius: 5px;
+    background-color: rgb(238, 238, 238);
+    margin: 8px;
+    padding: 10px;
+    font-size: 15px;
+}
+h1 {
+    align-self: center;
+    margin: 8px;
+}

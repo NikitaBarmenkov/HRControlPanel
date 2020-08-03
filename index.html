@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Control Panel</title>
+        <link rel="stylesheet" href="/style/style.css"/>
+    </head>
+    <body>
+        <div id="app">
+            <button  class="button" v-on:click="add_emp">Добавить</button>
+            <table id="table" v-if="employees.length > 0">
+                <thead>
+                  <tr>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>Оклад</th>
+                    <th>Статус</th>
+                    <th>Дата приема на работу</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(employee, index) in employees" :key="employee.id">
+                    <td>
+                        <input class="input" type="text" v-model="employee.name.name"
+                        :disabled="employee.name.isediting"
+                        placeholder="ФИО"
+                        v-on:focus="onfocus(employee.id, 'name')" 
+                        v-on:blur="onblur(employee.id, 'name')" 
+                        v-on:input="onnamechange(employee)">
+                    </td>
+                    <td>
+                        <input class="input" type="text" v-model="employee.position.position"
+                        :disabled="employee.position.isediting"
+                        placeholder="должность"
+                        v-on:focus="onfocus(employee.id, 'position')" 
+                        v-on:blur="onblur(employee.id, 'position')" 
+                        v-on:input="onpositionchange(employee)">
+                    </td>
+                    <td>
+                        <input class="input" type="number" v-model="employee.salary.salary"
+                        :disabled="employee.salary.isediting"
+                        placeholder="зарплата"
+                        v-on:focus="onfocus(employee.id, 'salary')" 
+                        v-on:blur="onblur(employee.id, 'salary')"
+                        v-on:input="onsalarychange(employee)">
+                    </td>
+                    <td>
+                        <select class="input" v-model="employee.status.status"
+                        :disabled="employee.status.isediting"
+                        v-on:focus="onfocus(employee.id, 'status')" 
+                        v-on:blur="onblur(employee.id, 'status')"
+                        v-on:change="onstatuschange(employee)">
+                            <option disabled value="">Выберите статус...</option>
+                            <option>соискатель</option>
+                            <option>сотрудник</option>
+                            <option>уволен</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input class="input" type="date" v-model="employee.employment_date.employment_date"
+                        :disabled="employee.employment_date.isediting"
+                        v-on:focus="onfocus(employee.id, 'employment_date')" 
+                        v-on:blur="onblur(employee.id, 'employment_date')"
+                        v-on:input="onemployment_datechange(employee)">
+                    </td>
+                    <td>
+                        <button class="button" v-on:click="delete_emp(employee.id)">Удалить</button>
+                    </td>
+                  </tr>
+                </tbody>
+            </table>
+            <h1 v-else>Нет данных</h1>
+        </div>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script>
+            var socket = null;
+            var app = new Vue({
+                el: '#app',
+                data: {
+                    employees: [],
+                },
+                methods: {
+                    onfocus: function (id, col) {
+                        socket.emit('onfocus', id, col);
+                    },
+                    onblur: function (id, col) {
+                        socket.emit('onblur', id, col)
+                    },
+                    onnamechange: function (emp) {
+                        socket.emit('onpropertychange', 'name', emp.id, emp.name.name)
+                    },
+                    onpositionchange: function (emp) {
+                        socket.emit('onpropertychange', 'position', emp.id, emp.position.position)
+                    },
+                    onsalarychange: function (emp) {
+                        socket.emit('onpropertychange', 'salary', emp.id, emp.salary.salary)
+                    },
+                    onstatuschange: function (emp) {
+                        socket.emit('onpropertychange', 'status', emp.id, emp.status.status)
+                    },
+                    onemployment_datechange: function (emp) {
+                        socket.emit('onpropertychange', 'employment_date', emp.id, emp.employment_date.employment_date)
+                    },
+                    delete_emp: function (id) {
+                        if (this.allow_delete(id))
+                            socket.emit('delete_emp', id)
+                        else
+                            alert('Удаление невозможно! Данная строка редактируется другим пользователем');
+                    },
+                    add_emp: function () {
+                        socket.emit('add_emp');
+                    },
+                    allow_delete: function (id) {
+                        const index = this.employees.findIndex((el) => el.id == id);
+                        if (index >= 0) {
+                            for (let key in this.employees[index]) {
+                                if (this.employees[index][key].isediting == true)
+                                    return false;
+                            }
+                            return true;
+                        }
+                        else return false;
+                    }
+                },
+                created: function() {
+                    socket = io();
+                },
+                mounted: function() {
+                    socket.on('propertychanged', (key, id, value) => {
+                        const index = this.employees.findIndex((el) => el.id == id);
+                        if (index >= 0) {
+                            const storage_value = JSON.parse(localStorage.getItem(id));
+                            this.employees[index][key][key] = value;
+                            storage_value[key][key] = value;
+                            localStorage.setItem(id, JSON.stringify(storage_value));
+                        }
+                        else console.log('Элемент с id = ' + id + ' не найден');
+                    });
+                    socket.on('get_server_data', (employees) => this.employees = employees);
+                    socket.on('added_emp', (emp) => {
+                        this.employees.push(emp);
+                        localStorage.setItem(emp.id, JSON.stringify(emp));
+                    });
+                    socket.on('deleted_emp', (id) => {
+                        const index_to_delete = this.employees.findIndex((emp) => emp.id == id);
+                        if (index_to_delete >= 0) {
+                            this.employees.splice(index_to_delete, 1);
+                            localStorage.removeItem(id);
+                        }
+                        else console.log('Элемент с id = ' + id + ' не найден');
+                    });
+                    socket.on("onfocused", (id, col) => {
+                        const index = this.employees.findIndex((emp) => emp.id == id);
+                        const storage_value = JSON.parse(localStorage.getItem(id));
+                        if (index >= 0) {
+                            this.employees[index][col].isediting = true;
+                            storage_value[col].isediting = true;
+                            localStorage.setItem(id, JSON.stringify(storage_value));
+                        }
+                        else console.log('Элемент с id = ' + id + ' не найден');
+                    });
+                    socket.on("onblured", (id, col) => {
+                        const index = this.employees.findIndex((emp) => emp.id == id);
+                        const storage_value = JSON.parse(localStorage.getItem(id));
+                        if (index >= 0) {
+                            this.employees[index][col].isediting = false;
+                            storage_value[col].isediting = false;
+                            localStorage.setItem(id, JSON.stringify(storage_value));
+                        }
+                        else console.log('Элемент с id = ' + id + ' не найден');
+                    });
+                    socket.on('blur_element', () => {
+                        document.activeElement.blur();
+                    })
+                }
+            });
+        </script>
+    </body>
+</html>

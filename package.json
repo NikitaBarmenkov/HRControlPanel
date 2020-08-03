@@ -1,0 +1,15 @@
+{
+  "name": "controlpanel",
+  "version": "1.0.0",
+  "description": "control panel in a form of a table for HR's",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nikita Barmenkov",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}
