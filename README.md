@@ -1,2 +1,2 @@
 # HRControlPanel
-Small web application that allows HR's managing employee data
+Small web application that allows HR managing employee data
